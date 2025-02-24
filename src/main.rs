@@ -53,7 +53,7 @@ impl fuser::Filesystem for UserProcFS {
             });
         } else if ino == 2 {
             reply.attr(&Duration::from_secs(1), &fuser::FileAttr {
-                ino: 1,
+                ino: 2,
                 size: 99999999 as u64,
                 blocks: 0,
                 atime: now,
@@ -74,16 +74,63 @@ impl fuser::Filesystem for UserProcFS {
         }
     }
 
-    fn readdir(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, reply: fuser::ReplyDirectory) {
+    fn lookup(&mut self, _req: &Request<'_>, parent: u64, name: &OsStr, reply: fuser::ReplyEntry) {
+        // Look up a directory entry
+        
+        if name == "bar" {
+            let now = SystemTime::now();
+
+            reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 2,
+                size: 99999999 as u64,
+                blocks: 1,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::RegularFile,
+                perm: 0o644,
+                nlink: 1,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            }, 0);
+        } else {
+            reply.error(libc::ENOENT);
+        }
+    }
+
+    fn readdir(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, mut reply: fuser::ReplyDirectory) {
         // Read the directory contents
+
+        if offset == 0 {
+            reply.add(1, 1, fuser::FileType::Directory, ".");
+            reply.add(1, 2, fuser::FileType::Directory, "..");
+            reply.add(2, 3, fuser::FileType::RegularFile, "bar");
+        }
+        reply.ok();
     }
 
     fn open(&mut self, _req: &Request<'_>, ino: u64, flags: i32, reply: fuser::ReplyOpen) {
         // Open the file
+
+        reply.opened(0, 0);
     }
 
     fn read(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, size: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyData) {
         // Read the file contents
+
+        let content = "Hello you!";
+
+        if ino == 2 {
+            let data = content.as_bytes();
+            let end = (offset as usize + size as usize).min(data.len());
+            reply.data(&data[offset as usize..end]);
+        } else {
+            reply.error(libc::ENOENT);
+        }
     }
 
     fn write(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, data: &[u8], write_flags: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyWrite) {
