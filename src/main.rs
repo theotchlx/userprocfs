@@ -3,6 +3,7 @@ use fuser::{Request, KernelConfig};//Context, DirEntry, File, Inode, Result};
 use std::env;
 use std::ffi::OsStr;
 use core::ffi::c_int;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 struct UserProcFS {
     // Initialize the UserProcFS
@@ -29,8 +30,48 @@ impl fuser::Filesystem for UserProcFS {
     fn getattr(&mut self, _req: &Request, ino: u64, fh: Option<u64>, reply: fuser::ReplyAttr) {
         // Get the file attributes
         
-        println!("getattr: ino: {}, fh: {:?}", ino, fh);
-        println!("getattr: reply: {:?}", reply);
+        let now = SystemTime::now();
+
+        // Filesystem mount root directory attributes
+        if ino == 1 {
+            reply.attr(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 1,
+                size: 0,
+                blocks: 0,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::Directory,
+                perm: 0o755,
+                nlink: 2,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            });
+        } else if ino == 2 {
+            reply.attr(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 1,
+                size: 99999999 as u64,
+                blocks: 0,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::RegularFile,
+                perm: 0o644,
+                nlink: 1,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            });
+        } else {
+            reply.error(libc::ENOENT);
+        }
     }
 
     fn readdir(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, reply: fuser::ReplyDirectory) {
