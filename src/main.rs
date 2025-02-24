@@ -1,6 +1,7 @@
 // Implement the file system kernel module
 use fuser::{Request, KernelConfig};//Context, DirEntry, File, Inode, Result};
 use std::env;
+use std::ffi::OsStr;
 use core::ffi::c_int;
 
 struct UserProcFS {
@@ -23,56 +24,53 @@ impl fuser::Filesystem for UserProcFS {
     fn init(&mut self, _req: &Request, _config: &mut KernelConfig) -> Result<(), c_int> {
         // Initialize the fs
         Ok(())
-    }/*
+    }
 
-    fn getattr(&self, _ctx: &Context, _path: &str, _attr: &mut fuser::stat::Stat) -> Result<()> {
+    fn getattr(&mut self, _req: &Request, ino: u64, fh: Option<u64>, reply: fuser::ReplyAttr) {
         // Get the file attributes
-        Ok(())
+        
+        println!("getattr: ino: {}, fh: {:?}", ino, fh);
+        println!("getattr: reply: {:?}", reply);
     }
 
-    fn readdir(&self, _ctx: &Context, _path: &str, _entry: &mut fuser::DirEntry) -> Result<()> {
+    fn readdir(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, reply: fuser::ReplyDirectory) {
         // Read the directory contents
-        Ok(())
     }
 
-    fn read(&self, _ctx: &Context, _path: &str, _offset: u64, _length: u64, _buf: &mut [u8]) -> Result<()> {
+    fn open(&mut self, _req: &Request<'_>, ino: u64, flags: i32, reply: fuser::ReplyOpen) {
+        // Open the file
+    }
+
+    fn read(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, size: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyData) {
         // Read the file contents
-        Ok(())
     }
 
-    fn write(&self, _ctx: &Context, _path: &str, _offset: u64, _length: u64, _buf: &[u8]) -> Result<()> {
+    fn write(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, data: &[u8], write_flags: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyWrite) {
         // Write to the file
-        Ok(())
     }
 
-    fn create(&self, _ctx: &Context, _path: &str, _mode: u32, _attr: &mut fuser::stat::Stat) -> Result<()> {
+    fn create(&mut self, _req: &Request<'_>, parent: u64, name: &OsStr, mode: u32, umask: u32, flags: i32, reply: fuser::ReplyCreate) {
         // Create a new file
-        Ok(())
     }
 
-    fn unlink(&self, _ctx: &Context, _path: &str) -> Result<()> {
+    fn unlink(&mut self, _req: &Request<'_>, parent: u64, name: &OsStr, reply: fuser::ReplyEmpty) {
         // Delete a file
-        Ok(())
     }
 
-    fn rmdir(&self, _ctx: &Context, _path: &str) -> Result<()> {
+    fn rmdir(&mut self, _req: &Request<'_>, parent: u64, name: &OsStr, reply: fuser::ReplyEmpty) {
         // Delete a directory
-        Ok(())
     }
 
-    fn rename(&self, _ctx: &Context, _old_path: &str, _new_path: &str) -> Result<()> {
+    fn rename(&mut self, _req: &Request<'_>, parent: u64, name: &OsStr, newparent: u64, newname: &OsStr, flags: u32, reply: fuser::ReplyEmpty) {
         // Rename a file or directory
-        Ok(())
     }
 
-    fn statfs(&self, _ctx: &Context, _path: &str, _buf: &mut fuser::stat::Statfs) -> Result<()> {
+    fn statfs(&mut self, _req: &Request<'_>, _ino: u64, reply: fuser::ReplyStatfs) {
         // Get the file system statistics
-        Ok(())
-    }*/
+    }
 }
 
 fn main() {
-    use::std::sync::Arc;
     // Threads handle
     let mut handles = Vec::new();
 
@@ -99,7 +97,8 @@ fn main() {
 
     // Wait for all threads to finish
     for handle in handles {
-        handle.expect("Failed").join();
+        handle.expect("Failed to unmount UserProcFS").join();
+        println!("UserProcFS unmounted successfully.");
     }
 }
 
