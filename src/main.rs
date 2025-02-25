@@ -158,11 +158,16 @@ impl fuser::Filesystem for UserProcFS {
             return;
         }
 
+        let mut index = offset as usize;
         for file in &self.files {
-            if reply.add(file.inode, offset + 1, file.ty, file.name) {
-                println!("Failed to add entry to directory, buffer is full.");
+            if index > 0 {
+                index -= 1;
+                continue;
+            }
+            if reply.add(file.inode, (offset + index as i64 + 1), file.ty, file.name) {
                 break;
             }
+            index += 1;
         }
 
         reply.ok();
