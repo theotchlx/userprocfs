@@ -182,19 +182,28 @@ impl fuser::Filesystem for UserProcFS {
     fn read(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, size: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyData) {
         // Read the file contents
 
-        use sysinfo::{System};
+        use sysinfo::{System, Disks, Networks};
 
         let mut sys = System::new_all();
         sys.refresh_all();
 
-        if ino == 4 {
-            let data = format!("{:?}", sys.total_memory()).into_bytes();
+        let disks = Disks::new_with_refreshed_list();
 
-            let end = (offset as usize + size as usize).min(data.len());
-            reply.data(&data[offset as usize..end]);
-        } else {
-            reply.error(libc::ENOENT);
-        }
+        let networks = Networks::new_with_refreshed_list();
+
+        let data = match ino {
+            4 => format!("{:?}", sys.total_memory()).into_bytes(),
+            5 => format!("{:?}", sys.used_memory()).into_bytes(),
+            6 => format!("{:?}", networks).into_bytes(),
+            7 => format!("{:?}", disks).into_bytes(),
+            8 => format!("{:?}", sys.cpus()).into_bytes(),
+            _ => {
+                reply.error(libc::ENOENT);
+                return;
+            }
+        };
+        let end = (offset as usize + size as usize).min(data.len());
+        reply.data(&data[offset as usize..end]);
     }
 
     /*fn write(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, data: &[u8], write_flags: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyWrite) {
