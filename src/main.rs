@@ -1,5 +1,5 @@
 // Implement the file system kernel module
-use fuser::{Request, KernelConfig};//Context, DirEntry, File, Inode, Result};
+use fuser::{Request, KernelConfig};
 use std::env;
 use std::ffi::OsStr;
 use core::ffi::c_int;
@@ -51,7 +51,7 @@ impl fuser::Filesystem for UserProcFS {
                 blksize: 512,
                 flags: 0,
             });
-        } else if ino == 2 {
+        } else if 1 <= ino && ino <= 5  {
             reply.attr(&Duration::from_secs(1), &fuser::FileAttr {
                 ino: 2,
                 size: 99999999 as u64,
@@ -76,12 +76,32 @@ impl fuser::Filesystem for UserProcFS {
 
     fn lookup(&mut self, _req: &Request<'_>, parent: u64, name: &OsStr, reply: fuser::ReplyEntry) {
         // Look up a directory entry
-        
-        if name == "bar" {
+      
+        if name == "processes" {
             let now = SystemTime::now();
 
             reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
                 ino: 2,
+                size: 88888888 as u64,
+                blocks: 1,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::Directory,
+                perm: 0o755,
+                nlink: 2,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            }, 0);
+        } else if name == "temperatures" {
+            let now = SystemTime::now();
+
+            reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 3,
                 size: 99999999 as u64,
                 blocks: 1,
                 atime: now,
@@ -90,7 +110,87 @@ impl fuser::Filesystem for UserProcFS {
                 crtime: now,
                 kind: fuser::FileType::RegularFile,
                 perm: 0o644,
-                nlink: 1,
+                nlink: 2,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            }, 0);
+        } else if name == "memory" {
+            let now = SystemTime::now();
+
+            reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 4,
+                size: 99999999 as u64,
+                blocks: 1,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::RegularFile,
+                perm: 0o644,
+                nlink: 2,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            }, 0);
+        } else if name == "network" {
+            let now = SystemTime::now();
+
+            reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 5,
+                size: 99999999 as u64,
+                blocks: 1,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::RegularFile,
+                perm: 0o644,
+                nlink: 2,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            }, 0);
+        } else if name == "disk" {
+            let now = SystemTime::now();
+
+            reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 6,
+                size: 99999999 as u64,
+                blocks: 1,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::RegularFile,
+                perm: 0o644,
+                nlink: 2,
+                uid: 1000,
+                gid: 1000,
+                rdev: 0,
+                blksize: 512,
+                flags: 0,
+            }, 0);
+        } else if name == "cpu" {
+            let now = SystemTime::now();
+
+            reply.entry(&Duration::from_secs(1), &fuser::FileAttr {
+                ino: 7,
+                size: 99999999 as u64,
+                blocks: 1,
+                atime: now,
+                mtime: now,
+                ctime: now,
+                crtime: now,
+                kind: fuser::FileType::RegularFile,
+                perm: 0o644,
+                nlink: 2,
                 uid: 1000,
                 gid: 1000,
                 rdev: 0,
@@ -108,7 +208,12 @@ impl fuser::Filesystem for UserProcFS {
         if offset == 0 {
             reply.add(1, 1, fuser::FileType::Directory, ".");
             reply.add(1, 2, fuser::FileType::Directory, "..");
-            reply.add(2, 3, fuser::FileType::RegularFile, "bar");
+            reply.add(2, 3, fuser::FileType::Directory, "processes");
+            reply.add(3, 4, fuser::FileType::RegularFile, "temperatures");
+            reply.add(4, 5, fuser::FileType::RegularFile, "memory");
+            reply.add(5, 6, fuser::FileType::RegularFile, "network");
+            reply.add(6, 7, fuser::FileType::RegularFile, "disk");
+            reply.add(7, 8, fuser::FileType::RegularFile, "cpu");
         }
         reply.ok();
     }
@@ -122,10 +227,14 @@ impl fuser::Filesystem for UserProcFS {
     fn read(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, size: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyData) {
         // Read the file contents
 
-        let content = "Hello you!";
+        use sysinfo::{System};
 
-        if ino == 2 {
-            let data = content.as_bytes();
+        let mut sys = System::new_all();
+        sys.refresh_all();
+
+        if ino == 4 {
+            let data = format!("{:?}", sys.total_memory()).into_bytes();
+
             let end = (offset as usize + size as usize).min(data.len());
             reply.data(&data[offset as usize..end]);
         } else {
