@@ -218,7 +218,7 @@ impl fuser::Filesystem for UserProcFS {
         }
     }
 
-    fn write(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, data: &[u8], write_flags: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyWrite) {
+    /*fn write(&mut self, _req: &Request<'_>, ino: u64, fh: u64, offset: i64, data: &[u8], write_flags: u32, flags: i32, lock_owner: Option<u64>, reply: fuser::ReplyWrite) {
         // Write to the file
     }
 
@@ -240,7 +240,7 @@ impl fuser::Filesystem for UserProcFS {
 
     fn statfs(&mut self, _req: &Request<'_>, _ino: u64, reply: fuser::ReplyStatfs) {
         // Get the file system statistics
-    }
+    }*/
 }
 
 fn main() {
