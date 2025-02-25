@@ -67,38 +67,12 @@ impl UserProcFS {
 
     fn get_file_by_inode(&self, inode: u64) -> Option<&File> {
         // Get the file by inode
-
-        match inode {
-            1 => Some(&self.files[0]),
-            2 => Some(&self.files[1]),
-            3 => Some(&self.files[2]),
-            4 => Some(&self.files[3]),
-            5 => Some(&self.files[4]),
-            6 => Some(&self.files[5]),
-            7 => Some(&self.files[6]),
-            8 => Some(&self.files[7]),
-            _ => None,
-        }
+        self.files.iter().find(|&file| file.inode == inode)
     }
 
     fn get_file_by_name(&self, name: &OsStr) -> Option<&File> {
         // Get the file by name
-
-        if name == "processes" {
-            Some(&self.files[0])
-        } else if name == "temperatures" {
-            Some(&self.files[1])
-        } else if name == "memory" {
-            Some(&self.files[2])
-        } else if name == "network" {
-            Some(&self.files[3])
-        } else if name == "disk" {
-            Some(&self.files[4])
-        } else if name == "cpu" {
-            Some(&self.files[5])
-        } else {
-            None
-        }
+        self.files.iter().find(|&file| file.name == name)
     }
 
     fn unmount() {
